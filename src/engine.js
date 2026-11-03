@@ -1,9 +1,6 @@
 import { audio } from './sound.js';
 import { Rabbit, Carrot, Tree, Particle, FloatingText, WORLD_SIZE, RABBIT_COLORS } from './entities.js';
 
-const NUM_CARROTS = 140;
-const NUM_AI_RABBITS = 16;
-
 const AI_NAMES = [
     "OrelhaFura", "CoelhoDuro", "Dentola", "CenouraKing",
     "PernaLigeira", "Saltitão", "Velocidade", "FofoBrutal",
@@ -35,6 +32,15 @@ export class GameEngine {
         this.lastTime = 0;
         this.screenShake = 0;
 
+        this.difficulty = 'normal';
+        this.settings = {
+            easy: { carrots: 160, aiCount: 12 },
+            normal: { carrots: 140, aiCount: 16 },
+            hard: { carrots: 110, aiCount: 20 }
+        };
+
+        this.isDarkMode = true;
+
         this.initEventListeners();
         this.resize();
     }
@@ -59,51 +65,88 @@ export class GameEngine {
             if (e.code === 'Space') this.input.dash = false;
         });
 
+        const diffButtons = document.querySelectorAll('.diff-btn');
+        diffButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                diffButtons.forEach(b => {
+                    b.className = "diff-btn py-2 bg-slate-800 border border-slate-700 hover:border-slate-500 text-slate-300 rounded-xl text-xs font-bold transition-all";
+                });
+                const diff = e.target.getAttribute('data-diff');
+                this.difficulty = diff;
+                
+                if (diff === 'easy') e.target.className = "diff-btn py-2 bg-emerald-500/20 border border-emerald-500 text-emerald-300 rounded-xl text-xs font-bold transition-all";
+                else if (diff === 'normal') e.target.className = "diff-btn py-2 bg-amber-500/20 border border-amber-500 text-amber-300 rounded-xl text-xs font-bold transition-all";
+                else if (diff === 'hard') e.target.className = "diff-btn py-2 bg-red-500/20 border border-red-500 text-red-300 rounded-xl text-xs font-bold transition-all";
+            });
+        });
+
+        const themeBtn = document.getElementById('btn-theme-toggle');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                this.isDarkMode = !this.isDarkMode;
+                const body = document.getElementById('app-body');
+                const icon = document.getElementById('theme-icon');
+                const text = document.getElementById('theme-text');
+
+                if (this.isDarkMode) {
+                    body.classList.add('dark');
+                    icon.innerText = '☀️';
+                    text.innerText = 'Modo Claro';
+                } else {
+                    body.classList.remove('dark');
+                    icon.innerText = '🌙';
+                    text.innerText = 'Modo Escuro';
+                }
+            });
+        }
+
         const joystickZone = document.getElementById('joystick-zone');
         const joystickKnob = document.getElementById('joystick-knob');
         let touchId = null;
         let center = { x: 0, y: 0 };
 
-        joystickZone.addEventListener('touchstart', (e) => {
-            audio.init();
-            const touch = e.changedTouches[0];
-            touchId = touch.identifier;
-            const rect = joystickZone.getBoundingClientRect();
-            center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-        });
+        if (joystickZone) {
+            joystickZone.addEventListener('touchstart', (e) => {
+                audio.init();
+                const touch = e.changedTouches[0];
+                touchId = touch.identifier;
+                const rect = joystickZone.getBoundingClientRect();
+                center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            });
 
-        joystickZone.addEventListener('touchmove', (e) => {
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                let touch = e.changedTouches[i];
-                if (touch.identifier === touchId) {
-                    let dx = touch.clientX - center.x;
-                    let dy = touch.clientY - center.y;
-                    let dist = Math.hypot(dx, dy);
-                    let maxR = 40;
-                    if (dist > maxR) {
-                        dx = (dx / dist) * maxR;
-                        dy = (dy / dist) * maxR;
+            joystickZone.addEventListener('touchmove', (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    let touch = e.changedTouches[i];
+                    if (touch.identifier === touchId) {
+                        let dx = touch.clientX - center.x;
+                        let dy = touch.clientY - center.y;
+                        let dist = Math.hypot(dx, dy);
+                        let maxR = 40;
+                        if (dist > maxR) {
+                            dx = (dx / dist) * maxR;
+                            dy = (dy / dist) * maxR;
+                        }
+                        joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+                        this.input.x = dx / maxR;
+                        this.input.y = dy / maxR;
                     }
-                    joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-                    this.input.x = dx / maxR;
-                    this.input.y = dy / maxR;
                 }
-            }
-        });
+            });
 
-        const resetJoystick = (e) => {
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === touchId) {
-                    touchId = null;
-                    joystickKnob.style.transform = `translate(0px, 0px)`;
-                    this.input.x = 0;
-                    this.input.y = 0;
+            const resetJoystick = (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === touchId) {
+                        touchId = null;
+                        joystickKnob.style.transform = `translate(0px, 0px)`;
+                        this.input.x = 0;
+                        this.input.y = 0;
+                    }
                 }
-            }
-        };
+            };
 
-        joystickZone.addEventListener('touchend', resetJoystick);
-        joystickZone.addEventListener('touchcancel', resetJoystick);
+            joystickZone.addEventListener('touchend', resetJoystick);
+            joystickZone.addEventListener('touchcancel', resetJoystick);
+        }
 
         document.getElementById('btn-start').addEventListener('click', () => {
             audio.init();
@@ -134,24 +177,26 @@ export class GameEngine {
     startGame(playerName) {
         document.getElementById('modal-overlay').classList.add('hidden');
 
+        const cfg = this.settings[this.difficulty];
+
         this.trees = [];
         for (let i = 0; i < 90; i++) {
             this.trees.push(new Tree());
         }
 
         this.carrots = [];
-        for (let i = 0; i < NUM_CARROTS; i++) {
+        for (let i = 0; i < cfg.carrots; i++) {
             this.carrots.push(new Carrot());
         }
 
         this.player = new Rabbit('player', playerName, true, RABBIT_COLORS[0]);
         this.rabbits = [this.player];
 
-        for (let i = 0; i < NUM_AI_RABBITS; i++) {
+        for (let i = 0; i < cfg.aiCount; i++) {
             const color = RABBIT_COLORS[(i + 1) % RABBIT_COLORS.length];
             const aiName = AI_NAMES[i % AI_NAMES.length];
             const ai = new Rabbit(`ai_${i}`, aiName, false, color);
-            ai.level = Math.floor(Math.random() * 3) + 1;
+            ai.level = Math.floor(Math.random() * (this.difficulty === 'hard' ? 4 : 3)) + 1;
             this.rabbits.push(ai);
         }
 
@@ -193,6 +238,7 @@ export class GameEngine {
 
     logCombat(msg) {
         const log = document.getElementById('combat-log');
+        if (!log) return;
         const entry = document.createElement('div');
         entry.className = "py-0.5 border-b border-slate-800/50";
         entry.innerHTML = msg;
@@ -297,7 +343,6 @@ export class GameEngine {
     update(dt) {
         this.updateInput();
 
-        // Câmara dinâmica com Zoom automático
         if (this.player && this.rabbits.includes(this.player)) {
             let zoomFactor = Math.max(0.6, 1.0 - (this.player.level - 1) * 0.015);
             let targetCamW = window.innerWidth / zoomFactor;
@@ -327,7 +372,8 @@ export class GameEngine {
 
         this.handleCollisions();
 
-        if (this.rabbits.length < NUM_AI_RABBITS) {
+        const cfg = this.settings[this.difficulty];
+        if (this.rabbits.length < cfg.aiCount) {
             const idx = Math.floor(Math.random() * AI_NAMES.length);
             const newAi = new Rabbit(`ai_${Date.now()}`, AI_NAMES[idx], false, RABBIT_COLORS[idx % RABBIT_COLORS.length]);
             this.rabbits.push(newAi);
@@ -357,14 +403,15 @@ export class GameEngine {
 
         const sortedRabbits = [...this.rabbits].sort((a, b) => b.level - a.level).slice(0, 5);
         const lbList = document.getElementById('leaderboard-list');
+        if (!lbList) return;
         lbList.innerHTML = '';
 
         sortedRabbits.forEach((r, idx) => {
             const li = document.createElement('li');
-            li.className = `flex justify-between items-center ${r.isPlayer ? 'text-amber-300 font-extrabold' : 'text-slate-300'}`;
+            li.className = `flex justify-between items-center ${r.isPlayer ? 'text-amber-300 font-extrabold' : (this.isDarkMode ? 'text-slate-300' : 'text-slate-700')}`;
             li.innerHTML = `
                 <span class="truncate max-w-[130px]">${idx + 1}. ${r.name} ${r.isPlayer ? '👑' : ''}</span>
-                <span class="font-game text-amber-400">Nív ${r.level}</span>
+                <span class="font-game text-amber-500">Nív ${r.level}</span>
             `;
             lbList.appendChild(li);
         });
@@ -374,6 +421,7 @@ export class GameEngine {
 
     renderMinimap() {
         const ctx = this.minimapCtx;
+        if (!ctx) return;
         const w = this.minimapCanvas.width;
         const h = this.minimapCanvas.height;
 
@@ -412,7 +460,12 @@ export class GameEngine {
                 const screenY = y - this.camera.y;
 
                 const isEven = (Math.floor(x / tileSize) + Math.floor(y / tileSize)) % 2 === 0;
-                this.ctx.fillStyle = isEven ? '#064E3B' : '#022C22';
+                
+                if (this.isDarkMode) {
+                    this.ctx.fillStyle = isEven ? '#064E3B' : '#022C22';
+                } else {
+                    this.ctx.fillStyle = isEven ? '#86efac' : '#4ade80';
+                }
                 this.ctx.fillRect(screenX, screenY, tileSize, tileSize);
             }
         }

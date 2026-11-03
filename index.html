@@ -7,22 +7,21 @@
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
     
-    <!-- O teu CSS personalizado -->
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body class="overflow-hidden w-screen h-screen flex flex-col justify-center items-center">
+<body id="app-body" class="overflow-hidden w-screen h-screen flex flex-col justify-center items-center transition-colors duration-300 dark">
 
-    <div id="game-container" class="relative w-full h-full overflow-hidden bg-emerald-950">
+    <div id="game-container" class="relative w-full h-full overflow-hidden bg-emerald-950 transition-colors duration-300" id="game-box">
         <canvas id="gameCanvas" class="w-full h-full block"></canvas>
 
         <!-- Dynamic HUD Overlay -->
         <div id="hud" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 sm:p-6">
+            <!-- Top Bar -->
             <div class="flex justify-between items-start w-full">
                 <!-- Player Stats -->
-                <div class="bg-slate-900/80 backdrop-blur-md border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-4 text-white shadow-lg flex items-center gap-4 min-w-[200px] pointer-events-auto">
+                <div id="hud-card-stats" class="bg-slate-900/80 backdrop-blur-md border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-4 text-white shadow-lg flex items-center gap-4 min-w-[200px] pointer-events-auto transition-colors">
                     <div id="player-avatar" class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-xl flex items-center justify-center text-2xl sm:text-3xl shadow-inner border border-amber-200">
                         🐰
                     </div>
@@ -35,9 +34,15 @@
                     </div>
                 </div>
 
-                <!-- Leaderboard & Combat Feed -->
+                <!-- Leaderboard, Combat Feed & Theme Toggle -->
                 <div class="flex flex-col items-end gap-3 max-w-[220px] sm:max-w-[280px]">
-                    <div class="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-2xl p-3 w-full text-white shadow-lg">
+                    <!-- Theme Toggle Button -->
+                    <button id="btn-theme-toggle" class="pointer-events-auto bg-slate-900/80 hover:bg-slate-800 text-amber-400 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
+                        <span id="theme-icon">☀️</span> <span id="theme-text">Modo Claro</span>
+                    </button>
+
+                    <!-- Leaderboard -->
+                    <div id="hud-card-lb" class="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-2xl p-3 w-full text-white shadow-lg transition-colors">
                         <h3 class="text-xs font-black uppercase text-amber-400 mb-2 flex items-center justify-between border-b border-slate-700 pb-1 font-game tracking-wider">
                             <span>🏆 Top Coelhos</span>
                             <span class="text-[10px] text-slate-400 font-normal">Floresta</span>
@@ -45,12 +50,14 @@
                         <ul id="leaderboard-list" class="space-y-1 text-xs sm:text-sm font-bold"></ul>
                     </div>
 
-                    <div id="combat-log" class="bg-slate-900/60 backdrop-blur-sm rounded-xl p-2 w-full max-h-28 overflow-y-auto space-y-1 text-[11px] text-slate-300 shadow-inner">
+                    <!-- Combat Log -->
+                    <div id="hud-card-log" class="bg-slate-900/60 backdrop-blur-sm rounded-xl p-2 w-full max-h-28 overflow-y-auto space-y-1 text-[11px] text-slate-300 shadow-inner transition-colors">
                         <div class="text-emerald-400 italic font-semibold">Bem-vindo à Floresta! Come cenouras para subir de nível!</div>
                     </div>
                 </div>
             </div>
 
+            <!-- Bottom Bar / Joystick & Minimap -->
             <div class="flex justify-between items-end w-full">
                 <div id="joystick-zone" class="w-32 h-32 relative pointer-events-auto sm:hidden flex items-center justify-center">
                     <div class="w-28 h-28 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center">
@@ -71,44 +78,41 @@
 
         <!-- Start / Game Over Modal Overlay -->
         <div id="modal-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-            <div id="start-screen" class="max-w-md w-full bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 text-center text-white shadow-2xl space-y-6">
-                <div class="inline-block bg-amber-500/20 p-4 rounded-full text-5xl mb-2 animate-bounce">
+            <!-- Start Screen -->
+            <div id="start-screen" class="max-w-md w-full bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 text-center text-white shadow-2xl space-y-5">
+                <div class="inline-block bg-amber-500/20 p-4 rounded-full text-4xl mb-1 animate-bounce">
                     🥕🐰
                 </div>
                 <div>
                     <h1 class="text-3xl sm:text-4xl font-black font-game text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-200">
                         BUNNY BRAWL
                     </h1>
-                    <p class="text-slate-400 text-sm mt-2">
-                        Come cenouras para crescer e subir de nível. Ataca coelhos de nível menor para roubar toda a sua força!
+                    <p class="text-slate-400 text-xs sm:text-sm mt-1">
+                        Come cenouras para crescer e rouba os níveis dos coelhos rivais!
                     </p>
                 </div>
 
-                <div class="bg-slate-800/80 p-4 rounded-2xl text-left space-y-2 text-xs sm:text-sm text-slate-300 border border-slate-700">
-                    <div class="flex items-center gap-2">
-                        <span class="text-lg">🥕</span>
-                        <span><b>Cenouras:</b> +1 Nível e aumento de tamanho.</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-lg">⚔️</span>
-                        <span><b>Porrada:</b> O coelho mais forte vence e rouba TODOS os níveis do derrotado!</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-lg">⚡</span>
-                        <span><b>Dash:</b> Usa impulso rápido para apanhar inimigos ou fugir!</span>
-                    </div>
-                </div>
-
                 <div>
-                    <label for="player-name-input" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-left">Nome do Teu Coelho:</label>
-                    <input type="text" id="player-name-input" value="SuperCoelho" maxlength="12" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-amber-400 transition-colors text-center text-lg">
+                    <label for="player-name-input" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 text-left">Nome do Teu Coelho:</label>
+                    <input type="text" id="player-name-input" value="SuperCoelho" maxlength="12" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-bold focus:outline-none focus:border-amber-400 transition-colors text-center text-base">
                 </div>
 
-                <button id="btn-start" class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black font-game text-xl rounded-2xl shadow-lg transform active:scale-95 transition-all">
+                <!-- Seletor de Dificuldade -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 text-left">Dificuldade do Jogo:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" data-diff="easy" class="diff-btn py-2 bg-slate-800 border border-slate-700 hover:border-emerald-400 text-slate-300 rounded-xl text-xs font-bold transition-all">Fácil</button>
+                        <button type="button" data-diff="normal" class="diff-btn py-2 bg-amber-500/20 border border-amber-500 text-amber-300 rounded-xl text-xs font-bold transition-all">Normal</button>
+                        <button type="button" data-diff="hard" class="diff-btn py-2 bg-slate-800 border border-slate-700 hover:border-red-400 text-slate-300 rounded-xl text-xs font-bold transition-all">Difícil</button>
+                    </div>
+                </div>
+
+                <button id="btn-start" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black font-game text-lg rounded-2xl shadow-lg transform active:scale-95 transition-all">
                     ENTRAR NA FLORESTA! 🚀
                 </button>
             </div>
 
+            <!-- Game Over Screen -->
             <div id="gameover-screen" class="hidden max-w-md w-full bg-slate-900 border-2 border-red-500/40 rounded-3xl p-6 sm:p-8 text-center text-white shadow-2xl space-y-6">
                 <div class="inline-block bg-red-500/20 p-4 rounded-full text-5xl mb-2">
                     💥😵
@@ -140,7 +144,6 @@
         </div>
     </div>
 
-    <!-- Carrega o módulo JS principal -->
     <script type="module" src="src/main.js"></script>
 </body>
 </html>
