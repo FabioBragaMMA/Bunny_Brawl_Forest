@@ -118,6 +118,52 @@ export class Carrot {
     }
 }
 
+// Cenoura Especial Dourada (Dá Velocidade Extra)
+export class GoldenCarrot {
+    constructor() {
+        this.respawn();
+    }
+    respawn() {
+        this.x = Math.random() * (WORLD_SIZE - 200) + 100;
+        this.y = Math.random() * (WORLD_SIZE - 200) + 100;
+        this.radius = 12;
+        this.bounceOffset = Math.random() * Math.PI * 2;
+    }
+    draw(ctx, camera) {
+        const screenX = this.x - camera.x;
+        const screenY = this.y - camera.y;
+
+        if (screenX < -30 || screenX > camera.w + 30 || screenY < -30 || screenY > camera.h + 30) return;
+
+        const bounce = Math.sin(Date.now() * 0.008 + this.bounceOffset) * 4;
+
+        ctx.save();
+        ctx.translate(screenX, screenY + bounce);
+
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.4)';
+        ctx.beginPath();
+        ctx.arc(0, 2, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#10B981';
+        ctx.beginPath();
+        ctx.arc(-2, -8, 4, 0, Math.PI * 2);
+        ctx.arc(2, -8, 4, 0, Math.PI * 2);
+        ctx.arc(0, -11, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#FACC15';
+        ctx.beginPath();
+        ctx.moveTo(-8, -4);
+        ctx.lineTo(8, -4);
+        ctx.lineTo(0, 12);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+}
+
 export class Tree {
     constructor() {
         this.x = Math.random() * WORLD_SIZE;
@@ -181,15 +227,17 @@ export class Rabbit {
         this.isDashing = false;
 
         this.invulnerableTimer = 0;
+        this.speedBoostTimer = 0; // Temporizador para o bónus de velocidade da cenoura dourada
     }
 
     getRadius() {
-        // Tamanho máximo limitado a 60px para evitar falhas visuais
         return Math.min(BASE_RADIUS + (this.level - 1) * 2.2, 60);
     }
 
     getSpeed() {
-        return BASE_SPEED + Math.min(this.level * 3, 100);
+        let base = BASE_SPEED + Math.min(this.level * 3, 100);
+        if (this.speedBoostTimer > 0) base *= 1.6; // +60% de velocidade com a cenoura especial!
+        return base;
     }
 
     addLevel(amount = 1) {
@@ -206,6 +254,7 @@ export class Rabbit {
     update(dt, inputDir, carrots, otherRabbits, addParticle, addText) {
         if (this.invulnerableTimer > 0) this.invulnerableTimer -= dt;
         if (this.dashCooldown > 0) this.dashCooldown -= dt;
+        if (this.speedBoostTimer > 0) this.speedBoostTimer -= dt;
 
         let moveX = 0;
         let moveY = 0;

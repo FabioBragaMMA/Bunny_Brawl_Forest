@@ -1,5 +1,5 @@
 import { audio } from './sound.js';
-import { Rabbit, Carrot, Tree, Particle, FloatingText, WORLD_SIZE, RABBIT_COLORS } from './entities.js';
+import { Rabbit, Carrot, GoldenCarrot, Tree, Particle, FloatingText, WORLD_SIZE, RABBIT_COLORS } from './entities.js';
 
 const AI_NAMES = [
     "OrelhaFura", "CoelhoDuro", "Dentola", "CenouraKing",
@@ -22,6 +22,7 @@ export class GameEngine {
         this.keys = {};
 
         this.carrots = [];
+        this.goldenCarrots = [];
         this.trees = [];
         this.rabbits = [];
         this.particles = [];
@@ -34,9 +35,9 @@ export class GameEngine {
 
         this.difficulty = 'normal';
         this.settings = {
-            easy: { carrots: 160, aiCount: 12 },
-            normal: { carrots: 140, aiCount: 16 },
-            hard: { carrots: 110, aiCount: 20 }
+            easy: { carrots: 160, goldenCarrots: 30, aiCount: 12 },
+            normal: { carrots: 140, goldenCarrots: 22, aiCount: 16 },
+            hard: { carrots: 110, goldenCarrots: 15, aiCount: 20 }
         };
 
         this.isDarkMode = true;
@@ -189,6 +190,11 @@ export class GameEngine {
             this.carrots.push(new Carrot());
         }
 
+        this.goldenCarrots = [];
+        for (let i = 0; i < cfg.goldenCarrots; i++) {
+            this.goldenCarrots.push(new GoldenCarrot());
+        }
+
         this.player = new Rabbit('player', playerName, true, RABBIT_COLORS[0]);
         this.rabbits = [this.player];
 
@@ -247,6 +253,7 @@ export class GameEngine {
     }
 
     handleCollisions() {
+        // Colisão com Cenouras Normais
         for (let r of this.rabbits) {
             const rRadius = r.getRadius();
             for (let c of this.carrots) {
@@ -271,8 +278,34 @@ export class GameEngine {
                     }
                 }
             }
+
+            // Colisão com Cenouras Especiais Douradas (Velocidade + Níveis)
+            for (let gc of this.goldenCarrots) {
+                const dist = Math.hypot(gc.x - r.x, gc.y - r.y);
+                if (dist < rRadius + gc.radius) {
+                    gc.respawn();
+                    r.speedBoostTimer = 6.0; // 6 segundos de velocidade extra
+                    r.addLevel(2); // Bónus de +2 níveis
+
+                    if (r.isPlayer) audio.playEat();
+                    
+                    this.addFloatingText(r.x, r.y - rRadius, "⚡ VELOCIDADE MÁXIMA!", "#FACC15", 20);
+
+                    for (let i = 0; i < 10; i++) {
+                        this.addParticle(
+                            r.x + (Math.random() - 0.5) * 20,
+                            r.y + (Math.random() - 0.5) * 20,
+                            '#FACC15', 5,
+                            (Math.random() - 0.5) * 120,
+                            (Math.random() - 0.5) * 120,
+                            0.5
+                        );
+                    }
+                }
+            }
         }
 
+        // Colisões entre Coelhos
         for (let i = 0; i < this.rabbits.length; i++) {
             for (let j = i + 1; j < this.rabbits.length; j++) {
                 const r1 = this.rabbits[i];
@@ -474,8 +507,14 @@ export class GameEngine {
         this.ctx.lineWidth = 6;
         this.ctx.strokeRect(-this.camera.x, -this.camera.y, WORLD_SIZE, WORLD_SIZE);
 
+        // Desenhar cenouras normais
         for (let c of this.carrots) {
             c.draw(this.ctx, this.camera);
+        }
+
+        // Desenhar cenouras douradas especiais
+        for (let gc of this.goldenCarrots) {
+            gc.draw(this.ctx, this.camera);
         }
 
         const renderables = [...this.rabbits, ...this.trees];
