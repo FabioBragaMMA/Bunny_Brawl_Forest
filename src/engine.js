@@ -1,5 +1,5 @@
 import { audio } from './sound.js';
-import { Rabbit, Carrot, GoldenCarrot, Tree, Particle, FloatingText, WORLD_SIZE, RABBIT_COLORS } from './entities.js';
+import { Rabbit, Carrot, GoldenCarrot, ShieldCarrot, MagnetCarrot, GiantMushroom, Tree, Particle, FloatingText, WORLD_SIZE, RABBIT_COLORS } from './entities.js';
 
 const AI_NAMES = [
     "OrelhaFura", "CoelhoDuro", "Dentola", "CenouraKing",
@@ -23,6 +23,9 @@ export class GameEngine {
 
         this.carrots = [];
         this.goldenCarrots = [];
+        this.shields = [];
+        this.magnets = [];
+        this.mushrooms = [];
         this.trees = [];
         this.rabbits = [];
         this.particles = [];
@@ -35,9 +38,9 @@ export class GameEngine {
 
         this.difficulty = 'normal';
         this.settings = {
-            easy: { carrots: 160, goldenCarrots: 30, aiCount: 12 },
-            normal: { carrots: 140, goldenCarrots: 22, aiCount: 16 },
-            hard: { carrots: 110, goldenCarrots: 15, aiCount: 20 }
+            easy: { carrots: 160, golden: 25, powerups: 10, aiCount: 12 },
+            normal: { carrots: 140, golden: 18, powerups: 7, aiCount: 16 },
+            hard: { carrots: 110, golden: 12, powerups: 4, aiCount: 20 }
         };
 
         this.isDarkMode = true;
@@ -177,23 +180,25 @@ export class GameEngine {
 
     startGame(playerName) {
         document.getElementById('modal-overlay').classList.add('hidden');
-
         const cfg = this.settings[this.difficulty];
 
         this.trees = [];
-        for (let i = 0; i < 90; i++) {
-            this.trees.push(new Tree());
-        }
+        for (let i = 0; i < 90; i++) this.trees.push(new Tree());
 
         this.carrots = [];
-        for (let i = 0; i < cfg.carrots; i++) {
-            this.carrots.push(new Carrot());
-        }
+        for (let i = 0; i < cfg.carrots; i++) this.carrots.push(new Carrot());
 
         this.goldenCarrots = [];
-        for (let i = 0; i < cfg.goldenCarrots; i++) {
-            this.goldenCarrots.push(new GoldenCarrot());
-        }
+        for (let i = 0; i < cfg.golden; i++) this.goldenCarrots.push(new GoldenCarrot());
+
+        this.shields = [];
+        for (let i = 0; i < cfg.powerups; i++) this.shields.push(new ShieldCarrot());
+
+        this.magnets = [];
+        for (let i = 0; i < cfg.powerups; i++) this.magnets.push(new MagnetCarrot());
+
+        this.mushrooms = [];
+        for (let i = 0; i < cfg.powerups; i++) this.mushrooms.push(new GiantMushroom());
 
         this.player = new Rabbit('player', playerName, true, RABBIT_COLORS[0]);
         this.rabbits = [this.player];
@@ -230,7 +235,6 @@ export class GameEngine {
 
         document.getElementById('summary-level').innerText = this.player.level;
         document.getElementById('summary-carrots').innerText = this.player.carrotsEaten;
-
         audio.playHit();
     }
 
@@ -253,59 +257,63 @@ export class GameEngine {
     }
 
     handleCollisions() {
-        // Colisão com Cenouras Normais
         for (let r of this.rabbits) {
             const rRadius = r.getRadius();
+
+            // 1. Cenouras Normais
             for (let c of this.carrots) {
-                const dist = Math.hypot(c.x - r.x, c.y - r.y);
-                if (dist < rRadius + c.radius) {
+                if (Math.hypot(c.x - r.x, c.y - r.y) < rRadius + c.radius) {
                     c.respawn();
                     r.addLevel(1);
-
                     if (r.isPlayer) audio.playEat();
-                    
                     this.addFloatingText(r.x, r.y - rRadius, "+1 Nível!", "#FACC15", 18);
-
-                    for (let i = 0; i < 6; i++) {
-                        this.addParticle(
-                            r.x + (Math.random() - 0.5) * 20,
-                            r.y + (Math.random() - 0.5) * 20,
-                            '#F97316', 4,
-                            (Math.random() - 0.5) * 80,
-                            (Math.random() - 0.5) * 80,
-                            0.4
-                        );
-                    }
                 }
             }
 
-            // Colisão com Cenouras Especiais Douradas (Velocidade + Níveis)
+            // 2. Cenouras Douradas (Velocidade)
             for (let gc of this.goldenCarrots) {
-                const dist = Math.hypot(gc.x - r.x, gc.y - r.y);
-                if (dist < rRadius + gc.radius) {
+                if (Math.hypot(gc.x - r.x, gc.y - r.y) < rRadius + gc.radius) {
                     gc.respawn();
-                    r.speedBoostTimer = 6.0; // 6 segundos de velocidade extra
-                    r.addLevel(2); // Bónus de +2 níveis
-
+                    r.speedBoostTimer = 6.0;
+                    r.addLevel(2);
                     if (r.isPlayer) audio.playEat();
-                    
-                    this.addFloatingText(r.x, r.y - rRadius, "⚡ VELOCIDADE MÁXIMA!", "#FACC15", 20);
+                    this.addFloatingText(r.x, r.y - rRadius, "⚡ VELOCIDADE!", "#FACC15", 20);
+                }
+            }
 
-                    for (let i = 0; i < 10; i++) {
-                        this.addParticle(
-                            r.x + (Math.random() - 0.5) * 20,
-                            r.y + (Math.random() - 0.5) * 20,
-                            '#FACC15', 5,
-                            (Math.random() - 0.5) * 120,
-                            (Math.random() - 0.5) * 120,
-                            0.5
-                        );
-                    }
+            // 3. Escudo Azul (Invulnerabilidade)
+            for (let s of this.shields) {
+                if (Math.hypot(s.x - r.x, s.y - r.y) < rRadius + s.radius) {
+                    s.respawn();
+                    r.shieldTimer = 7.0; // 7 segundos de escudo
+                    if (r.isPlayer) audio.playEat();
+                    this.addFloatingText(r.x, r.y - rRadius, "🛡️ ESCUDO ATIVO!", "#3B82F6", 20);
+                }
+            }
+
+            // 4. Íman Roxo (Atrai Cenouras)
+            for (let m of this.magnets) {
+                if (Math.hypot(m.x - r.x, m.y - r.y) < rRadius + m.radius) {
+                    m.respawn();
+                    r.magnetTimer = 6.0; // 6 segundos de íman
+                    if (r.isPlayer) audio.playEat();
+                    this.addFloatingText(r.x, r.y - rRadius, "🧲 ÍMAN DE CENOURAS!", "#A855F7", 20);
+                }
+            }
+
+            // 5. Cogumelo Vermelho (Crescimento Gigante)
+            for (let gm of this.mushrooms) {
+                if (Math.hypot(gm.x - r.x, gm.y - r.y) < rRadius + gm.radius) {
+                    gm.respawn();
+                    r.giantTimer = 6.0; // 6 segundos gigante
+                    r.addLevel(3);
+                    if (r.isPlayer) audio.playEat();
+                    this.addFloatingText(r.x, r.y - rRadius, "🍄 CRESCIMENTO GIGANTE!", "#EF4444", 20);
                 }
             }
         }
 
-        // Colisões entre Coelhos
+        // Colisões entre Coelhos (Batalhas)
         for (let i = 0; i < this.rabbits.length; i++) {
             for (let j = i + 1; j < this.rabbits.length; j++) {
                 const r1 = this.rabbits[i];
@@ -325,16 +333,19 @@ export class GameEngine {
 
                     if (r1.invulnerableTimer > 0 || r2.invulnerableTimer > 0) continue;
 
-                    let winner = null;
-                    let loser = null;
-
-                    if (r1.level > r2.level) {
-                        winner = r1; loser = r2;
-                    } else if (r2.level > r1.level) {
-                        winner = r2; loser = r1;
-                    } else {
+                    let winner = null, loser = null;
+                    if (r1.level > r2.level) { winner = r1; loser = r2; }
+                    else if (r2.level > r1.level) { winner = r2; loser = r1; }
+                    else {
                         if (Math.random() < 0.5) { winner = r1; loser = r2; }
                         else { winner = r2; loser = r1; }
+                    }
+
+                    // Se o perdedor tiver escudo ativo, o escudo protege-o e absorve o ataque!
+                    if (loser.shieldTimer > 0) {
+                        loser.shieldTimer = 0; // O escudo quebra-se
+                        this.addFloatingText(loser.x, loser.y - loser.getRadius() - 10, "🛡️ ESCUDO DEFENDERU!", "#3B82F6", 20);
+                        continue;
                     }
 
                     const stolenLevels = loser.resetLevel();
@@ -344,25 +355,9 @@ export class GameEngine {
                     this.screenShake = 12;
                     audio.playBrawl();
 
-                    const midX = (r1.x + r2.x) / 2;
-                    const midY = (r1.y + r2.y) / 2;
-
-                    for (let k = 0; k < 20; k++) {
-                        this.addParticle(
-                            midX + (Math.random() - 0.5) * 30,
-                            midY + (Math.random() - 0.5) * 30,
-                            Math.random() < 0.5 ? '#EF4444' : '#F59E0B',
-                            Math.random() * 8 + 4,
-                            (Math.random() - 0.5) * 200,
-                            (Math.random() - 0.5) * 200,
-                            0.5
-                        );
-                    }
-
                     this.addFloatingText(winner.x, winner.y - winner.getRadius() - 10, `+${stolenLevels} NÍVEIS! 💥`, '#10B981', 24);
                     this.addFloatingText(loser.x, loser.y - loser.getRadius() - 10, `PERDEU TUDO! 😵`, '#EF4444', 20);
-
-                    this.logCombat(`⚔️ <b>${winner.name}</b> deu uma coça a <b>${loser.name}</b> e roubou +${stolenLevels} níveis!`);
+                    this.logCombat(`⚔️ <b>${winner.name}</b> derrotou <b>${loser.name}</b> e roubou +${stolenLevels} níveis!`);
 
                     if (loser.isPlayer) {
                         this.rabbits = this.rabbits.filter(r => r !== loser);
@@ -459,7 +454,6 @@ export class GameEngine {
         const h = this.minimapCanvas.height;
 
         ctx.clearRect(0, 0, w, h);
-
         const scale = w / WORLD_SIZE;
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
@@ -491,7 +485,6 @@ export class GameEngine {
             for (let y = startY; y < this.camera.y + this.camera.h + tileSize; y += tileSize) {
                 const screenX = x - this.camera.x;
                 const screenY = y - this.camera.y;
-
                 const isEven = (Math.floor(x / tileSize) + Math.floor(y / tileSize)) % 2 === 0;
                 
                 if (this.isDarkMode) {
@@ -507,37 +500,25 @@ export class GameEngine {
         this.ctx.lineWidth = 6;
         this.ctx.strokeRect(-this.camera.x, -this.camera.y, WORLD_SIZE, WORLD_SIZE);
 
-        // Desenhar cenouras normais
-        for (let c of this.carrots) {
-            c.draw(this.ctx, this.camera);
-        }
-
-        // Desenhar cenouras douradas especiais
-        for (let gc of this.goldenCarrots) {
-            gc.draw(this.ctx, this.camera);
-        }
+        // Desenhar todos os itens e power-ups no mapa
+        for (let c of this.carrots) c.draw(this.ctx, this.camera);
+        for (let gc of this.goldenCarrots) gc.draw(this.ctx, this.camera);
+        for (let s of this.shields) s.draw(this.ctx, this.camera);
+        for (let m of this.magnets) m.draw(this.ctx, this.camera);
+        for (let gm of this.mushrooms) gm.draw(this.ctx, this.camera);
 
         const renderables = [...this.rabbits, ...this.trees];
         renderables.sort((a, b) => a.y - b.y);
 
-        for (let entity of renderables) {
-            entity.draw(this.ctx, this.camera);
-        }
-
-        for (let p of this.particles) {
-            p.draw(this.ctx, this.camera);
-        }
-
-        for (let ft of this.floatingTexts) {
-            ft.draw(this.ctx, this.camera);
-        }
+        for (let entity of renderables) entity.draw(this.ctx, this.camera);
+        for (let p of this.particles) p.draw(this.ctx, this.camera);
+        for (let ft of this.floatingTexts) ft.draw(this.ctx, this.camera);
 
         this.ctx.restore();
     }
 
     gameLoop(timestamp) {
         if (!this.isRunning) return;
-
         const dt = Math.min((timestamp - this.lastTime) / 1000, 0.1);
         this.lastTime = timestamp;
 

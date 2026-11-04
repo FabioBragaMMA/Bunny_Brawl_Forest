@@ -118,7 +118,6 @@ export class Carrot {
     }
 }
 
-// Cenoura Especial Dourada (Dá Velocidade Extra)
 export class GoldenCarrot {
     constructor() {
         this.respawn();
@@ -132,26 +131,19 @@ export class GoldenCarrot {
     draw(ctx, camera) {
         const screenX = this.x - camera.x;
         const screenY = this.y - camera.y;
-
         if (screenX < -30 || screenX > camera.w + 30 || screenY < -30 || screenY > camera.h + 30) return;
-
         const bounce = Math.sin(Date.now() * 0.008 + this.bounceOffset) * 4;
 
         ctx.save();
         ctx.translate(screenX, screenY + bounce);
-
         ctx.fillStyle = 'rgba(250, 204, 21, 0.4)';
         ctx.beginPath();
         ctx.arc(0, 2, 16, 0, Math.PI * 2);
         ctx.fill();
-
         ctx.fillStyle = '#10B981';
         ctx.beginPath();
-        ctx.arc(-2, -8, 4, 0, Math.PI * 2);
-        ctx.arc(2, -8, 4, 0, Math.PI * 2);
         ctx.arc(0, -11, 4.5, 0, Math.PI * 2);
         ctx.fill();
-
         ctx.fillStyle = '#FACC15';
         ctx.beginPath();
         ctx.moveTo(-8, -4);
@@ -159,7 +151,78 @@ export class GoldenCarrot {
         ctx.lineTo(0, 12);
         ctx.closePath();
         ctx.fill();
+        ctx.restore();
+    }
+}
 
+// 1. Escudo Azul (Invulnerabilidade)
+export class ShieldCarrot {
+    constructor() { this.respawn(); }
+    respawn() {
+        this.x = Math.random() * (WORLD_SIZE - 200) + 100;
+        this.y = Math.random() * (WORLD_SIZE - 200) + 100;
+        this.radius = 14;
+    }
+    draw(ctx, camera) {
+        const sx = this.x - camera.x, sy = this.y - camera.y;
+        if (sx < -30 || sx > camera.w + 30 || sy < -30 || sy > camera.h + 30) return;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.4)';
+        ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#3B82F6';
+        ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("🛡️", 0, 1);
+        ctx.restore();
+    }
+}
+
+// 2. Íman Roxo (Atrai Cenouras)
+export class MagnetCarrot {
+    constructor() { this.respawn(); }
+    respawn() {
+        this.x = Math.random() * (WORLD_SIZE - 200) + 100;
+        this.y = Math.random() * (WORLD_SIZE - 200) + 100;
+        this.radius = 14;
+    }
+    draw(ctx, camera) {
+        const sx = this.x - camera.x, sy = this.y - camera.y;
+        if (sx < -30 || sx > camera.w + 30 || sy < -30 || sy > camera.h + 30) return;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.fillStyle = 'rgba(168, 85, 247, 0.4)';
+        ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#A855F7';
+        ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("🧲", 0, 1);
+        ctx.restore();
+    }
+}
+
+// 3. Cogumelo Vermelho Gigante
+export class GiantMushroom {
+    constructor() { this.respawn(); }
+    respawn() {
+        this.x = Math.random() * (WORLD_SIZE - 200) + 100;
+        this.y = Math.random() * (WORLD_SIZE - 200) + 100;
+        this.radius = 14;
+    }
+    draw(ctx, camera) {
+        const sx = this.x - camera.x, sy = this.y - camera.y;
+        if (sx < -30 || sx > camera.w + 30 || sy < -30 || sy > camera.h + 30) return;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+        ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#EF4444';
+        ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("🍄", 0, 1);
         ctx.restore();
     }
 }
@@ -173,27 +236,22 @@ export class Tree {
     draw(ctx, camera) {
         const screenX = this.x - camera.x;
         const screenY = this.y - camera.y;
-
         if (screenX < -100 || screenX > camera.w + 100 || screenY < -100 || screenY > camera.h + 100) return;
 
         ctx.save();
         ctx.translate(screenX, screenY);
-
         ctx.fillStyle = 'rgba(0,0,0,0.25)';
         ctx.beginPath();
         ctx.ellipse(10, 15, this.radius * 0.9, this.radius * 0.5, 0, 0, Math.PI * 2);
         ctx.fill();
-
         ctx.fillStyle = '#064E3B';
         ctx.beginPath();
         ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
         ctx.fill();
-
         ctx.fillStyle = '#047857';
         ctx.beginPath();
         ctx.arc(-this.radius * 0.2, -this.radius * 0.2, this.radius * 0.75, 0, Math.PI * 2);
         ctx.fill();
-
         ctx.restore();
     }
 }
@@ -227,16 +285,21 @@ export class Rabbit {
         this.isDashing = false;
 
         this.invulnerableTimer = 0;
-        this.speedBoostTimer = 0; // Temporizador para o bónus de velocidade da cenoura dourada
+        this.speedBoostTimer = 0;
+        this.shieldTimer = 0;   // Duração do escudo azul
+        this.magnetTimer = 0;   // Duração do íman roxo
+        this.giantTimer = 0;    // Duração do cogumelo gigante
     }
 
     getRadius() {
-        return Math.min(BASE_RADIUS + (this.level - 1) * 2.2, 60);
+        let base = Math.min(BASE_RADIUS + (this.level - 1) * 2.2, 60);
+        if (this.giantTimer > 0) base *= 1.4; // Aumenta o tamanho com o cogumelo
+        return base;
     }
 
     getSpeed() {
         let base = BASE_SPEED + Math.min(this.level * 3, 100);
-        if (this.speedBoostTimer > 0) base *= 1.6; // +60% de velocidade com a cenoura especial!
+        if (this.speedBoostTimer > 0) base *= 1.6;
         return base;
     }
 
@@ -255,6 +318,9 @@ export class Rabbit {
         if (this.invulnerableTimer > 0) this.invulnerableTimer -= dt;
         if (this.dashCooldown > 0) this.dashCooldown -= dt;
         if (this.speedBoostTimer > 0) this.speedBoostTimer -= dt;
+        if (this.shieldTimer > 0) this.shieldTimer -= dt;
+        if (this.magnetTimer > 0) this.magnetTimer -= dt;
+        if (this.giantTimer > 0) this.giantTimer -= dt;
 
         let moveX = 0;
         let moveY = 0;
@@ -302,22 +368,22 @@ export class Rabbit {
             }
         }
 
+        // Íman de Cenouras: Atrai cenouras próximas diretamente para o coelho
+        if (this.magnetTimer > 0) {
+            for (let c of carrots) {
+                let d = Math.hypot(this.x - c.x, this.y - c.y);
+                if (d < 220) {
+                    c.x += (this.x - c.x) * 5 * dt;
+                    c.y += (this.y - c.y) * 5 * dt;
+                }
+            }
+        }
+
         let speedMultiplier = 1;
         if (this.isDashing) {
             this.dashTimer -= dt;
             speedMultiplier = 2.2;
             if (this.dashTimer <= 0) this.isDashing = false;
-
-            if (Math.random() < 0.6) {
-                addParticle(
-                    this.x + (Math.random() - 0.5) * 10,
-                    this.y + (Math.random() - 0.5) * 10,
-                    'rgba(255,255,255,0.4)',
-                    this.getRadius() * 0.4,
-                    -moveX * 50, -moveY * 50,
-                    0.3
-                );
-            }
         }
 
         let mag = Math.hypot(moveX, moveY);
@@ -355,6 +421,15 @@ export class Rabbit {
 
         ctx.save();
         ctx.translate(screenX, screenY - this.hopHeight);
+
+        // Efeito visual se tiver o Escudo Ativo
+        if (this.shieldTimer > 0) {
+            ctx.strokeStyle = '#3B82F6';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, r + 8, 0, Math.PI * 2);
+            ctx.stroke();
+        }
 
         if (this.invulnerableTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0) {
             ctx.globalAlpha = 0.4;
