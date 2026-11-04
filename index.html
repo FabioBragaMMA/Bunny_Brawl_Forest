@@ -5,20 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bunny Brawl Forest</title>
     
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body id="app-body" class="overflow-hidden w-screen h-screen flex flex-col justify-center items-center transition-colors duration-300 dark">
 
-    <div id="game-container" class="relative w-full h-full overflow-hidden bg-emerald-950 transition-colors duration-300" id="game-box">
+    <div id="game-container" class="relative w-full h-full overflow-hidden bg-emerald-950 transition-colors duration-300">
         <canvas id="gameCanvas" class="w-full h-full block"></canvas>
 
-        <!-- Dynamic HUD Overlay -->
+        <!-- HUD Overlay -->
         <div id="hud" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 sm:p-6">
-            <!-- Top Bar -->
             <div class="flex justify-between items-start w-full">
                 <!-- Player Stats -->
                 <div id="hud-card-stats" class="bg-slate-900/80 backdrop-blur-md border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-4 text-white shadow-lg flex items-center gap-4 min-w-[200px] pointer-events-auto transition-colors">
@@ -34,14 +31,12 @@
                     </div>
                 </div>
 
-                <!-- Leaderboard, Combat Feed & Theme Toggle -->
+                <!-- Right Side: Theme, Leaderboard & Combat Log -->
                 <div class="flex flex-col items-end gap-3 max-w-[220px] sm:max-w-[280px]">
-                    <!-- Theme Toggle Button -->
                     <button id="btn-theme-toggle" class="pointer-events-auto bg-slate-900/80 hover:bg-slate-800 text-amber-400 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
                         <span id="theme-icon">☀️</span> <span id="theme-text">Modo Claro</span>
                     </button>
 
-                    <!-- Leaderboard -->
                     <div id="hud-card-lb" class="bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-2xl p-3 w-full text-white shadow-lg transition-colors">
                         <h3 class="text-xs font-black uppercase text-amber-400 mb-2 flex items-center justify-between border-b border-slate-700 pb-1 font-game tracking-wider">
                             <span>🏆 Top Coelhos</span>
@@ -50,14 +45,13 @@
                         <ul id="leaderboard-list" class="space-y-1 text-xs sm:text-sm font-bold"></ul>
                     </div>
 
-                    <!-- Combat Log -->
                     <div id="hud-card-log" class="bg-slate-900/60 backdrop-blur-sm rounded-xl p-2 w-full max-h-28 overflow-y-auto space-y-1 text-[11px] text-slate-300 shadow-inner transition-colors">
-                        <div class="text-emerald-400 italic font-semibold">Bem-vindo à Floresta! Come cenouras para subir de nível!</div>
+                        <div class="text-emerald-400 italic font-semibold">Cuidado com as águias predadoras e come cenouras!</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Bar / Joystick & Minimap -->
+            <!-- Bottom Bar / Joystick -->
             <div class="flex justify-between items-end w-full">
                 <div id="joystick-zone" class="w-32 h-32 relative pointer-events-auto sm:hidden flex items-center justify-center">
                     <div class="w-28 h-28 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center">
@@ -67,7 +61,7 @@
 
                 <div class="hidden sm:flex text-slate-300/80 text-xs bg-slate-900/70 px-4 py-2 rounded-xl backdrop-blur-sm border border-slate-700/50 gap-4">
                     <span><kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-600 font-bold text-amber-400">WASD</kbd> / <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-600 font-bold text-amber-400">Setas</kbd> Mover</span>
-                    <span><kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-600 font-bold text-amber-400">Espaço</kbd> Dash (Boost)</span>
+                    <span><kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-600 font-bold text-amber-400">Espaço</kbd> Dash</span>
                 </div>
 
                 <div class="bg-slate-900/80 border-2 border-emerald-600/60 rounded-2xl overflow-hidden p-1 shadow-lg pointer-events-auto">
@@ -76,68 +70,113 @@
             </div>
         </div>
 
+        <!-- Pop-up de Conquista Desbloqueada (HUD) -->
+        <div id="achievement-popup" class="absolute top-6 left-1/2 transform -translate-x-1/2 bg-amber-500 text-slate-950 px-5 py-3 rounded-2xl font-black shadow-2xl flex items-center gap-3 transition-all duration-300 opacity-0 pointer-events-none z-50">
+            <span class="text-2xl">🏆</span>
+            <div>
+                <div class="text-[10px] uppercase tracking-wider font-extrabold text-amber-950">Conquista Desbloqueada!</div>
+                <div id="achievement-title" class="text-sm font-game">Nome da Conquista</div>
+            </div>
+        </div>
+
         <!-- Start / Game Over Modal Overlay -->
         <div id="modal-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+            
             <!-- Start Screen -->
-            <div id="start-screen" class="max-w-md w-full bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 text-center text-white shadow-2xl space-y-5">
-                <div class="inline-block bg-amber-500/20 p-4 rounded-full text-4xl mb-1 animate-bounce">
+            <div id="start-screen" class="max-w-md w-full bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-7 text-center text-white shadow-2xl space-y-4">
+                <div class="inline-block bg-amber-500/20 p-3 rounded-full text-3xl mb-1 animate-bounce">
                     🥕🐰
                 </div>
                 <div>
-                    <h1 class="text-3xl sm:text-4xl font-black font-game text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-200">
-                        BUNNY BRAWL
+                    <h1 class="text-2xl sm:text-3xl font-black font-game text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-300 to-yellow-200">
+                        BUNNY BRAWL FOREST
                     </h1>
-                    <p class="text-slate-400 text-xs sm:text-sm mt-1">
-                        Come cenouras para crescer e rouba os níveis dos coelhos rivais!
+                    <p class="text-slate-400 text-xs mt-1">
+                        Cresce, apanha power-ups, foge das águias e domina a floresta!
                     </p>
                 </div>
 
                 <div>
-                    <label for="player-name-input" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 text-left">Nome do Teu Coelho:</label>
-                    <input type="text" id="player-name-input" value="SuperCoelho" maxlength="12" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-bold focus:outline-none focus:border-amber-400 transition-colors text-center text-base">
+                    <label for="player-name-input" class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 text-left">Nome do Coelho:</label>
+                    <input type="text" id="player-name-input" value="SuperCoelho" maxlength="12" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white font-bold focus:outline-none focus:border-amber-400 text-center text-base">
+                </div>
+
+                <!-- 4. Loja de Skins e Acessórios -->
+                <div class="grid grid-cols-2 gap-3 text-left">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cor do Pelo:</label>
+                        <select id="skin-color-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-amber-400">
+                            <option value="0">🤍 Pelo Polar Branco</option>
+                            <option value="1">🩶 Cinzento Rocha</option>
+                            <option value="2">🧡 Castanho Natural</option>
+                            <option value="3">💜 Roxo Mágico</option>
+                            <option value="4">🩵 Azul Ciano</option>
+                            <option value="5">💚 Verde Esmeralda</option>
+                            <option value="6">💖 Rosa Neon</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Acessório:</label>
+                        <select id="skin-accessory-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-amber-400">
+                            <option value="none">Nenhum</option>
+                            <option value="glasses">😎 Óculos de Sol</option>
+                            <option value="crown">👑 Coroa de Rei</option>
+                            <option value="santa">🎅 Gorro de Natal</option>
+                            <option value="ninja">🥷 Fita de Ninja</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Seletor de Dificuldade -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 text-left">Dificuldade do Jogo:</label>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 text-left">Dificuldade:</label>
                     <div class="grid grid-cols-3 gap-2">
-                        <button type="button" data-diff="easy" class="diff-btn py-2 bg-slate-800 border border-slate-700 hover:border-emerald-400 text-slate-300 rounded-xl text-xs font-bold transition-all">Fácil</button>
-                        <button type="button" data-diff="normal" class="diff-btn py-2 bg-amber-500/20 border border-amber-500 text-amber-300 rounded-xl text-xs font-bold transition-all">Normal</button>
-                        <button type="button" data-diff="hard" class="diff-btn py-2 bg-slate-800 border border-slate-700 hover:border-red-400 text-slate-300 rounded-xl text-xs font-bold transition-all">Difícil</button>
+                        <button type="button" data-diff="easy" class="diff-btn py-1.5 bg-slate-800 border border-slate-700 hover:border-emerald-400 text-slate-300 rounded-xl text-xs font-bold transition-all">Fácil</button>
+                        <button type="button" data-diff="normal" class="diff-btn py-1.5 bg-amber-500/20 border border-amber-500 text-amber-300 rounded-xl text-xs font-bold transition-all">Normal</button>
+                        <button type="button" data-diff="hard" class="diff-btn py-1.5 bg-slate-800 border border-slate-700 hover:border-red-400 text-slate-300 rounded-xl text-xs font-bold transition-all">Difícil</button>
                     </div>
                 </div>
 
-                <button id="btn-start" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black font-game text-lg rounded-2xl shadow-lg transform active:scale-95 transition-all">
+                <button id="btn-start" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black font-game text-lg rounded-2xl shadow-lg transform active:scale-95 transition-all">
                     ENTRAR NA FLORESTA! 🚀
                 </button>
             </div>
 
-            <!-- Game Over Screen -->
-            <div id="gameover-screen" class="hidden max-w-md w-full bg-slate-900 border-2 border-red-500/40 rounded-3xl p-6 sm:p-8 text-center text-white shadow-2xl space-y-6">
-                <div class="inline-block bg-red-500/20 p-4 rounded-full text-5xl mb-2">
+            <!-- 6. Game Over & Estatísticas Finais -->
+            <div id="gameover-screen" class="hidden max-w-md w-full bg-slate-900 border-2 border-red-500/40 rounded-3xl p-6 sm:p-7 text-center text-white shadow-2xl space-y-5">
+                <div class="inline-block bg-red-500/20 p-4 rounded-full text-4xl mb-1">
                     💥😵
                 </div>
                 <div>
-                    <h2 class="text-3xl font-black font-game text-red-400">
+                    <h2 class="text-2xl sm:text-3xl font-black font-game text-red-400">
                         LEVASTE UMA COÇA!
                     </h2>
-                    <p id="death-reason" class="text-slate-300 text-sm mt-2">
-                        Um coelho mais forte derrotou-te e roubou os teus níveis!
+                    <p id="death-reason" class="text-slate-300 text-xs sm:text-sm mt-1">
+                        Um coelho mais forte ou uma águia apanhou-te desprevenido!
                     </p>
                 </div>
 
-                <div class="bg-slate-800/80 p-4 rounded-2xl grid grid-cols-2 gap-4 text-center border border-slate-700">
-                    <div>
-                        <div class="text-xs text-slate-400 font-bold uppercase">Nível Alcançado</div>
-                        <div id="summary-level" class="text-2xl font-black font-game text-amber-400">1</div>
+                <!-- Painel Completo de Estatísticas -->
+                <div class="bg-slate-800/90 p-4 rounded-2xl space-y-2 text-left border border-slate-700 text-xs sm:text-sm">
+                    <div class="flex justify-between border-b border-slate-700 pb-1">
+                        <span class="text-slate-400 font-bold">⏱️ Tempo Sobrevivido:</span>
+                        <span id="stat-time" class="font-game text-amber-400">0s</span>
                     </div>
-                    <div>
-                        <div class="text-xs text-slate-400 font-bold uppercase">Cenouras Comidas</div>
-                        <div id="summary-carrots" class="text-2xl font-black font-game text-orange-400">0</div>
+                    <div class="flex justify-between border-b border-slate-700 pb-1">
+                        <span class="text-slate-400 font-bold">⚔️ Batalhas Vencidas:</span>
+                        <span id="stat-wins" class="font-game text-emerald-400">0</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-700 pb-1">
+                        <span class="text-slate-400 font-bold">🥕 Cenouras Especiais:</span>
+                        <span id="stat-golden" class="font-game text-yellow-400">0</span>
+                    </div>
+                    <div class="flex justify-between pt-0.5">
+                        <span class="text-slate-400 font-bold">👑 Recorde Pessoal (High Score):</span>
+                        <span id="stat-highscore" class="font-game text-amber-300">Nível 1</span>
                     </div>
                 </div>
 
-                <button id="btn-respawn" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black font-game text-xl rounded-2xl shadow-lg transform active:scale-95 transition-all">
+                <button id="btn-respawn" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black font-game text-lg rounded-2xl shadow-lg transform active:scale-95 transition-all">
                     RENASCER & VINGANÇA ⚡
                 </button>
             </div>
